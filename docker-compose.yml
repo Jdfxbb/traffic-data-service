@@ -1,0 +1,48 @@
+name: urban-sdk-traffic-service
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: traffic_db
+    environment:
+      POSTGRES_DB: traffic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d traffic"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  init-db:
+    build: .
+    command: python -m app.database.init_db
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/traffic
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./data:/data
+
+  api:
+    build: .
+    container_name: traffic_api
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/traffic
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ./data:/data
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  postgres_data:

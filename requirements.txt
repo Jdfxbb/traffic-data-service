@@ -1,0 +1,14 @@
+sqlalchemy
+fastapi
+uvicorn[standard]
+psycopg2-binary
+geoalchemy2
+pandas
+geopandas
+shapely
+pyarrow
+pydantic
+requests
+mapboxgl
+ipython==7.23.1
+coloredlogs
